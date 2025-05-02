@@ -88,7 +88,7 @@ class StoryCreator:
             img_gen_config = {
                 "default_provider": "openai",
                 "providers": {
-                    "openai": {"model": "dall-e-3"}  # Example, could be configurable
+                    "openai": {"model": "gpt-image-1"}  # Example, could be configurable
                 },
             }
             self.image_generator = ImageGeneratorFactory.create(
