@@ -1,0 +1,20 @@
+{
+    "characters": [
+      {
+        "name": "Leo",
+        "description": "A small, brave lion cub with a fluffy mane"
+      },
+      {
+        "name": "Squeaky",
+        "description": "A tiny, energetic field mouse who loves cheese"
+      }
+    ],
+    "theme": "Friendship and overcoming fears",
+    "age_range": "3-5 years",
+    "location": {
+      "setting": "A sunny meadow next to a sparkling blue river",
+      "details": ["Tall swaying grass", "Colorful wildflowers", "Busy buzzing bees"]
+    },
+    "story_length_pages": 8,
+    "image_style": "Colorful cartoon illustration, simple and friendly, watercolor texture"
+  }

@@ -1,0 +1,316 @@
+# core/story_creator.py
+import asyncio
+import json
+import logging
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+import google.generativeai as genai
+from pydantic import BaseModel, Field
+
+from .image_generator import ImageGeneratorFactory, ImageGenerator
+from .utils import sanitize_filename, ensure_dir_exists
+
+logger = logging.getLogger(__name__)
+
+
+# --- Pydantic Models for Configuration ---
+class Character(BaseModel):
+    name: str
+    description: str
+
+
+class Location(BaseModel):
+    setting: str
+    details: List[str] = []
+
+
+class StoryConfig(BaseModel):
+    characters: List[Character]
+    theme: str
+    age_range: str
+    location: Location
+    story_length_pages: int = Field(
+        default=8, ge=4, le=20
+    )  # Sensible default and limits
+    image_style: str
+
+
+# --- Dataclasses for Story Output ---
+@dataclass
+class Page:
+    page_number: int
+    text: str
+    image_path: Optional[Path] = None
+    image_prompt: Optional[str] = None
+
+
+@dataclass
+class Book:
+    title: str
+    config: StoryConfig
+    full_story: str
+    output_dir: Path
+    pages: List[Page] = field(default_factory=list)
+
+
+# --- StoryCreator Class ---
+class StoryCreator:
+    def __init__(
+        self,
+        config: StoryConfig,
+        credentials: Dict[str, str],
+        output_base_dir: Path = Path("./output"),
+    ):
+        self.config = config
+        self.credentials = credentials
+        self.output_base_dir = output_base_dir
+        self.gemini_model = None
+        self.image_generator: Optional[ImageGenerator] = None
+        self._setup_clients()
+
+    def _setup_clients(self):
+        """Initialize Gemini and Image Generator clients."""
+        try:
+            if self.credentials.get("GEMINI_API_KEY"):
+                genai.configure(api_key=self.credentials["GEMINI_API_KEY"])
+                # Use a model suitable for creative writing, like gemini-1.5-flash or pro
+                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                logger.info("Gemini client configured.")
+            else:
+                logger.error("GEMINI_API_KEY not found in credentials.")
+                raise ValueError("Missing GEMINI_API_KEY")
+
+            # Setup Image Generator (defaulting to OpenAI for this project)
+            # Allow specifying provider via config in future if needed
+            img_gen_config = {
+                "default_provider": "openai",
+                "providers": {
+                    "openai": {"model": "dall-e-3"}  # Example, could be configurable
+                },
+            }
+            self.image_generator = ImageGeneratorFactory.create(
+                provider=img_gen_config["default_provider"],
+                credentials=self.credentials,
+                config=img_gen_config,  # Pass the whole config dict
+            )
+            if not self.image_generator:
+                logger.error("Failed to initialize Image Generator.")
+                raise ValueError("Could not create image generator instance.")
+
+        except Exception as e:
+            logger.exception(f"Error setting up AI clients: {e}")
+            raise
+
+    async def _generate_story_text(self) -> str:
+        """Generates the full story text using Gemini."""
+        if not self.gemini_model:
+            raise RuntimeError("Gemini model not initialized.")
+
+        char_desc = "\n".join(
+            [f"- {c.name}: {c.description}" for c in self.config.characters]
+        )
+        loc_desc = f"{self.config.location.setting}, featuring {', '.join(self.config.location.details)}."
+
+        prompt = (
+            f"Write a children's story suitable for the age range {self.config.age_range}.\n"
+            f"Theme: {self.config.theme}\n"
+            f"Characters:\n{char_desc}\n"
+            f"Location: {loc_desc}\n"
+            f"The story should be engaging, positive, and approximately {self.config.story_length_pages} short paragraphs long (each paragraph will be a page).\n"
+            f"Ensure the story has a clear beginning, middle, and a gentle resolution or end.\n"
+            f"Use simple language appropriate for the age group.\n"
+            f"Focus on the interactions between the characters and their environment."
+            f"Do NOT include page numbers or explicit page breaks like '[Page X]' in the output. Just write the story text continuously."
+        )
+        logger.info("Generating story text...")
+        try:
+            response = await self.gemini_model.generate_content_async(prompt)
+            story_text = response.text.strip()
+            logger.info("Story text generated successfully.")
+            # Basic validation
+            if not story_text or len(story_text) < 50:
+                raise ValueError("Generated story text is too short or empty.")
+            return story_text
+        except Exception as e:
+            logger.exception(f"Error generating story text: {e}")
+            raise
+
+    def _split_story_into_pages(self, full_story: str) -> List[str]:
+        """Splits the story into pages based on paragraphs."""
+        # Simple split by double newline, filtering empty strings
+        paragraphs = [p.strip() for p in full_story.split("\n\n") if p.strip()]
+
+        # If too few paragraphs, split longer ones. If too many, merge short ones.
+        # This is a basic approach; a more sophisticated method might use sentence boundaries
+        # or even another LLM call to get ideal page breaks.
+
+        target_pages = self.config.story_length_pages
+        if len(paragraphs) < target_pages / 2:  # Heuristic: Too few paragraphs
+            logger.warning(
+                f"Only {len(paragraphs)} paragraphs found. Trying sentence splitting."
+            )
+            sentences = [
+                s.strip() + "."
+                for s in full_story.replace("\n", " ").split(".")
+                if s.strip()
+            ]
+            # Rough estimate of sentences per page
+            sents_per_page = max(1, len(sentences) // target_pages)
+            pages = []
+            for i in range(0, len(sentences), sents_per_page):
+                pages.append(" ".join(sentences[i : i + sents_per_page]))
+            paragraphs = pages[:target_pages]  # Take desired number of pages
+
+        elif len(paragraphs) > target_pages * 1.5:  # Heuristic: Too many paragraphs
+            logger.warning(
+                f"Found {len(paragraphs)} paragraphs, more than expected. Merging shortest."
+            )
+            # Basic merging: combine shortest adjacent paragraphs until target length is approached
+            # (A more robust implementation would be needed for complex cases)
+            while len(paragraphs) > target_pages and len(paragraphs) > 1:
+                shortest_idx = min(
+                    range(len(paragraphs)), key=lambda i: len(paragraphs[i])
+                )
+                if shortest_idx > 0:  # Merge with previous if possible
+                    paragraphs[shortest_idx - 1] += "\n" + paragraphs.pop(shortest_idx)
+                elif len(paragraphs) > 1:  # Merge with next
+                    paragraphs[0] += "\n" + paragraphs.pop(1)
+                else:  # Cannot merge further
+                    break
+            paragraphs = paragraphs[:target_pages]  # Trim if still too long
+
+        # Ensure we don't exceed the target page count significantly
+        if len(paragraphs) > target_pages:
+            paragraphs = paragraphs[:target_pages]
+
+        logger.info(f"Split story into {len(paragraphs)} pages.")
+        return paragraphs
+
+    async def _generate_page_image(
+        self, page_text: str, page_number: int, book_title: str, output_dir: Path
+    ) -> Optional[Page]:
+        """Generates an image for a single page."""
+        if not self.image_generator:
+            logger.warning("Image generator not available.")
+            return None
+
+        # Create a descriptive prompt for the image generator
+        character_names = ", ".join([c.name for c in self.config.characters])
+        image_prompt = (
+            f"Children's book illustration for a story about {character_names}. "
+            f"Scene description: {page_text}. "
+            f"Style: {self.config.image_style}. "
+            f"Setting: {self.config.location.setting}. "
+            f"Overall theme: {self.config.theme}. "
+            f"Age range: {self.config.age_range}. "
+            f"Ensure characters ({character_names}) are visible and interacting if mentioned. Vibrant colors, clear depiction."
+            # Add negative prompts if needed: "Avoid text, complex details, scary elements."
+        )
+
+        filename = f"page_{page_number:02d}.png"  # Use png or jpg
+        image_path = output_dir / filename
+
+        generated_path = await self.image_generator.generate(image_prompt, image_path)
+
+        if generated_path:
+            return Page(
+                page_number=page_number,
+                text=page_text,
+                image_path=generated_path,
+                image_prompt=image_prompt,
+            )
+        else:
+            logger.error(f"Failed to generate image for page {page_number}")
+            # Return page data without image path
+            return Page(
+                page_number=page_number,
+                text=page_text,
+                image_path=None,
+                image_prompt=image_prompt,
+            )
+
+    async def create_book(self) -> Book:
+        """Orchestrates the book creation process."""
+        # 1. Generate Story Text
+        full_story = await self._generate_story_text()
+        if not full_story:
+            raise RuntimeError("Failed to generate story text.")
+
+        # Attempt to extract a title (simple approach)
+        first_sentence = full_story.split(".")[0]
+        book_title = (
+            sanitize_filename(first_sentence)[:30]
+            or f"Story_{self.config.characters[0].name}"
+        )
+        logger.info(f"Using tentative title: {book_title}")
+
+        # Create output directory for this specific book
+        book_output_dir = self.output_base_dir / book_title
+        ensure_dir_exists(book_output_dir)
+
+        # 2. Split into Pages
+        page_texts = self._split_story_into_pages(full_story)
+
+        # 3. Generate Images for Pages (Concurrently)
+        image_tasks = []
+        for i, text in enumerate(page_texts):
+            page_number = i + 1
+            task = self._generate_page_image(
+                text, page_number, book_title, book_output_dir
+            )
+            image_tasks.append(task)
+
+        # Wait for all image generation tasks to complete
+        generated_pages: List[Optional[Page]] = await asyncio.gather(*image_tasks)
+
+        # Filter out None results (if image generation failed for a page)
+        successful_pages = [page for page in generated_pages if page is not None]
+
+        # 4. Assemble Book Object
+        book = Book(
+            title=book_title,
+            config=self.config,
+            full_story=full_story,
+            pages=successful_pages,
+            output_dir=book_output_dir,
+        )
+
+        # 5. Save story text and config to the book's directory
+        self._save_book_metadata(book)
+
+        logger.info(f"Book '{book.title}' created successfully in {book.output_dir}")
+        return book
+
+    def _save_book_metadata(self, book: Book):
+        """Saves the story text and config to the book's output directory."""
+        try:
+            # Save full story text
+            story_file = book.output_dir / "story.txt"
+            with open(story_file, "w", encoding="utf-8") as f:
+                f.write(f"Title: {book.title}\n\n")
+                f.write("--- Story Config ---\n")
+                f.write(book.config.model_dump_json(indent=2))
+                f.write("\n\n--- Full Story Text ---\n")
+                f.write(book.full_story)
+
+            # Save page details (text and image prompts) as JSON
+            page_data = [
+                {
+                    "page": p.page_number,
+                    "text": p.text,
+                    "image_prompt": p.image_prompt,
+                    "image_filename": p.image_path.name if p.image_path else None,
+                }
+                for p in book.pages
+            ]
+            pages_file = book.output_dir / "pages_manifest.json"
+            with open(pages_file, "w", encoding="utf-8") as f:
+                json.dump(page_data, f, indent=2)
+
+            logger.info(f"Saved story text and page manifest to {book.output_dir}")
+
+        except Exception as e:
+            logger.exception(f"Error saving book metadata: {e}")
