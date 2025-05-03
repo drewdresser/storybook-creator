@@ -1,5 +1,6 @@
 # core/story_creator.py
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os
@@ -190,7 +191,12 @@ class StoryCreator:
         return paragraphs
 
     async def _generate_page_image(
-        self, page_text: str, page_number: int, book_title: str, output_dir: Path
+        self,
+        page_text: str,
+        page_number: int,
+        book_title: str,
+        output_dir: Path,
+        page_texts: List[str],
     ) -> Optional[Page]:
         """Generates an image for a single page."""
         if not self.image_generator:
@@ -201,12 +207,15 @@ class StoryCreator:
         character_names = ", ".join([c.name for c in self.config.characters])
         image_prompt = (
             f"Children's book illustration for a story about {character_names}. "
-            f"Scene description: {page_text}. "
+            f"The story title is {book_title}. "
+            f"Full story: {''.join(page_texts)}. "
+            f"Specific page: {page_text}. "
             f"Style: {self.config.image_style}. "
             f"Setting: {self.config.location.setting}. "
             f"Overall theme: {self.config.theme}. "
             f"Age range: {self.config.age_range}. "
             f"Ensure characters ({character_names}) are visible and interacting if mentioned. Vibrant colors, clear depiction."
+            "Put the specific page text strategicially placed in the image using the font Andika from Google Fonts."
             # Add negative prompts if needed: "Avoid text, complex details, scary elements."
         )
 
@@ -248,7 +257,10 @@ class StoryCreator:
         logger.info(f"Using tentative title: {book_title}")
 
         # Create output directory for this specific book
-        book_output_dir = self.output_base_dir / book_title
+        # Add timestamp to book title for uniqueness
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # book_title = f"{timestamp}_{book_title}"
+        book_output_dir = self.output_base_dir / timestamp / book_title
         ensure_dir_exists(book_output_dir)
 
         # 2. Split into Pages
@@ -259,7 +271,7 @@ class StoryCreator:
         for i, text in enumerate(page_texts):
             page_number = i + 1
             task = self._generate_page_image(
-                text, page_number, book_title, book_output_dir
+                text, page_number, book_title, book_output_dir, page_texts
             )
             image_tasks.append(task)
 

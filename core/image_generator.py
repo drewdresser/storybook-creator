@@ -133,7 +133,7 @@ class GPTImageGenerator(ImageGenerator):
 
             b64_data = response.data[0].b64_json
             if not b64_data:
-                logger.error(f"GPT Image generation failed: No image data in response.")
+                logger.error("GPT Image generation failed: No image data in response.")
                 return None
 
             image_data = base64.b64decode(b64_data)
