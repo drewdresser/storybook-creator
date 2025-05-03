@@ -13,7 +13,9 @@ from core.utils import setup_logging, ensure_dir_exists
 logger = setup_logging()
 
 
-def load_story_config(config_path: Path = Path("story_config.json")) -> StoryConfig:
+def load_story_config(
+    config_path: Path = Path("input/story_config.json"),
+) -> StoryConfig:
     """Loads story configuration from JSON file."""
     if not config_path.exists():
         logger.error(f"Configuration file not found: {config_path}")

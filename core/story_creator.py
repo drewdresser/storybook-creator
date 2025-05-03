@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 from pydantic import BaseModel, Field
 
-from .image_generator import ImageGeneratorFactory, ImageGenerator
+from .image_generator import ImageGeneratorFactory, ImageGenerator, GPTImageGenerator
 from .utils import sanitize_filename, ensure_dir_exists
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class Character(BaseModel):
     name: str
     description: str
+    image_path: Optional[str] = None
 
 
 class Location(BaseModel):
@@ -198,47 +199,106 @@ class StoryCreator:
         output_dir: Path,
         page_texts: List[str],
     ) -> Optional[Page]:
-        """Generates an image for a single page."""
+        """Generates or edits an image for a single page, using character images if available."""
         if not self.image_generator:
             logger.warning("Image generator not available.")
-            return None
+            # Still return Page object without image info
+            return Page(page_number=page_number, text=page_text)
 
-        # Create a descriptive prompt for the image generator
-        character_names = ", ".join([c.name for c in self.config.characters])
-        image_prompt = (
-            f"Children's book illustration for a story about {character_names}. "
-            f"The story title is {book_title}. "
-            f"Full story: {''.join(page_texts)}. "
-            f"Specific page: {page_text}. "
-            f"Style: {self.config.image_style}. "
-            f"Setting: {self.config.location.setting}. "
-            f"Overall theme: {self.config.theme}. "
-            f"Age range: {self.config.age_range}. "
-            f"Ensure characters ({character_names}) are visible and interacting if mentioned. Vibrant colors, clear depiction."
-            "Put the specific page text strategicially placed in the image using the font Andika from Google Fonts."
-            # Add negative prompts if needed: "Avoid text, complex details, scary elements."
+        character_names = [c.name for c in self.config.characters]
+        # Find characters mentioned in the current page text
+        mentioned_chars = [
+            c for c in self.config.characters if c.name.lower() in page_text.lower()
+        ]
+        character_image_paths = []
+        if mentioned_chars:
+            logger.info(
+                f"Page {page_number}: Characters mentioned: {[c.name for c in mentioned_chars]}"
+            )
+            for char in mentioned_chars:
+                if char.image_path:
+                    img_path = Path(
+                        char.image_path
+                    )  # Assuming relative path from workspace root
+                    if img_path.is_file():
+                        character_image_paths.append(img_path)
+                        logger.info(f"Found image for {char.name}: {img_path}")
+                    else:
+                        logger.warning(
+                            f"Character image file not found for {char.name} at {img_path}, will generate without it."
+                        )
+
+        # Base prompt components
+        base_prompt = (
+            "You will generate a page for a children's book. I'll give you some metadata, the full text of the book, and the text for this specific page."
+            f"Children's book illustration. Style: {self.config.image_style}. "
+            f"Setting: {self.config.location.setting}. Theme: {self.config.theme}. "
+            f"Age: {self.config.age_range}. Story context: {' '.join(page_texts)}. "  # Provide full story context
+            f"This specific page shows: {page_text}. "
+            f"Characters present or interacting if mentioned: {', '.join(character_names)}. "  # List all possible characters
+            f"Ensure vibrant colors, clear depiction, and a friendly atmosphere."
+            f"Incorporate the page text '{page_text}' visually into the image using the Andika font from Google Fonts, perhaps on a sign, scroll, or subtly in the background."
+            # Consider adding negative prompts if needed
         )
 
-        filename = f"page_{page_number:02d}.png"  # Use png or jpg
+        filename = f"page_{page_number:02d}.png"  # Default to png, generator might change suffix
         image_path = output_dir / filename
+        generated_path: Optional[Path] = None
+        final_image_prompt: str = base_prompt
 
-        generated_path = await self.image_generator.generate(image_prompt, image_path)
+        # Check if we should use edit or generate
+        # Currently only supporting edit for GPTImageGenerator
+        if character_image_paths and isinstance(
+            self.image_generator, GPTImageGenerator
+        ):
+            # We have character images and a compatible generator for editing
+            edit_prompt = (
+                f"{base_prompt}"
+                f"Combine the character(s) from the input image(s) into the description above, maintaining the overall style. Preserve the key characteristics of the characters, but make them look like they are in the scene. "
+            )
+            final_image_prompt = edit_prompt  # Store the prompt used
+            logger.info(
+                f"Attempting image edit for page {page_number} using {len(character_image_paths)} character image(s)..."
+            )
+            generated_path = await self.image_generator.edit(
+                prompt=edit_prompt,
+                input_image_paths=character_image_paths,
+                output_path=image_path,
+            )
+        else:
+            # Generate from scratch (no char images, or generator doesn't support edit)
+            if character_image_paths:
+                logger.warning(
+                    f"Character images found for page {page_number}, but image generator type does not support editing. Generating from scratch."
+                )
+            else:
+                logger.info(
+                    f"Generating new image for page {page_number} from scratch..."
+                )
+
+            generated_path = await self.image_generator.generate(
+                prompt=base_prompt,  # Use the base prompt for generation
+                output_path=image_path,
+                size="1536x1024",  # Example size for generation
+            )
 
         if generated_path:
+            logger.info(
+                f"Successfully processed image for page {page_number} at {generated_path}"
+            )
             return Page(
                 page_number=page_number,
                 text=page_text,
                 image_path=generated_path,
-                image_prompt=image_prompt,
+                image_prompt=final_image_prompt,  # Log the actual prompt used (edit or generate)
             )
         else:
-            logger.error(f"Failed to generate image for page {page_number}")
-            # Return page data without image path
+            logger.error(f"Failed to generate or edit image for page {page_number}")
             return Page(
                 page_number=page_number,
                 text=page_text,
                 image_path=None,
-                image_prompt=image_prompt,
+                image_prompt=final_image_prompt,  # Log the prompt even on failure
             )
 
     async def create_book(self) -> Book:

@@ -1,16 +1,17 @@
 {
     "characters": [
       {
-        "name": "Leo",
-        "description": "A small, brave giraffe with a fluffy mane"
+        "name": "Ella",
+        "description": "A baby human with a big smile",
+        "image_path": "input/images/ella.jpeg"
       },
       {
-        "name": "Squeaky",
-        "description": "A tiny, energetic field mouse who loves cheese"
+        "name": "Rory",
+        "description": "A black and white tibetan terrier puppy"
       }
     ],
     "theme": "Friendship and overcoming fears",
-    "age_range": "0-1 years",
+    "age_range": "1-2 years",
     "location": {
       "setting": "A sunny meadow next to a sparkling blue river",
       "details": ["Tall swaying grass", "Colorful wildflowers", "Busy buzzing bees"]

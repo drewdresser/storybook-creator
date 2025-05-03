@@ -1,0 +1,1 @@
+cp story_config.example.json input/story_config.json

@@ -3,7 +3,7 @@ import base64
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from openai import AsyncOpenAI  # Using AsyncOpenAI for better performance
 
@@ -18,6 +18,18 @@ class ImageGenerator(ABC):
         self, prompt: str, output_path: Path, size: str = "1024x1024"
     ) -> Optional[Path]:
         """Generate an image from the prompt and save it to the output path."""
+        pass
+
+    @abstractmethod
+    async def edit(
+        self,
+        prompt: str,
+        input_image_paths: List[Path],
+        output_path: Path,
+        mask_path: Optional[Path] = None,
+        size: str = "1536x1024",
+    ) -> Optional[Path]:
+        """Edit an image based on input images, mask (optional), and prompt."""
         pass
 
 
@@ -101,7 +113,10 @@ class GPTImageGenerator(ImageGenerator):
             )
 
     async def generate(
-        self, prompt: str, output_path: Path, size: str = "1536x1024"
+        self,
+        prompt: str,
+        output_path: Path,
+        size: str = "1536x1024",
     ) -> Optional[Path]:
         logger.info(
             f"Generating GPT Image for prompt (first 50 chars): {prompt[:50]}..."
@@ -112,23 +127,25 @@ class GPTImageGenerator(ImageGenerator):
             "model": self.model,
             "prompt": prompt,
             "size": size,
+            "response_format": "b64_json",  # Need b64 for saving
         }
         if "quality" in self.config:
             payload["quality"] = self.config["quality"]
-        if "output_format" in self.config:
-            # Ensure output_path suffix matches format if specified
-            output_format = self.config["output_format"].lower()
-            payload["output_format"] = output_format
-            if output_path.suffix.lower() != f".{output_format}":
-                output_path = output_path.with_suffix(f".{output_format}")
-                logger.info(f"Adjusted output path to match format: {output_path}")
+        # Output format is determined by file saving, not direct API param for generate b64
+        # if "output_format" in self.config:
+        # Ensure output_path suffix matches format if specified
+        # output_format = self.config["output_format"].lower()
+        # payload["output_format"] = output_format # Not for b64_json response
+        # if output_path.suffix.lower() != f".{output_format}":
+        # output_path = output_path.with_suffix(f".{output_format}")
+        # logger.info(f"Adjusted output path to match format: {output_path}")
         if "output_compression" in self.config:
             # API expects 0-100, useful for jpeg/webp
             payload["output_compression"] = self.config["output_compression"]
         # Note: 'style' is not listed as a param for gpt-image-1 in the cookbook
 
         try:
-            logger.info(f"Payload: {payload}")
+            logger.debug(f"Generate Payload: {payload}")
             response = await self.client.images.generate(**payload)
 
             b64_data = response.data[0].b64_json
@@ -144,8 +161,86 @@ class GPTImageGenerator(ImageGenerator):
             return output_path
 
         except Exception as e:
-            logger.error(f"GPT Image generation failed: {e}")
+            logger.exception(f"GPT Image generation failed: {e}")  # Log full traceback
             return None
+
+    async def edit(
+        self,
+        prompt: str,
+        input_image_paths: List[Path],
+        output_path: Path,
+        mask_path: Optional[Path] = None,
+        size: str = "1536x1024",
+    ) -> Optional[Path]:
+        """Edits an image using input images, prompt, and optional mask."""
+        logger.info(
+            f"Editing GPT Image with {len(input_image_paths)} inputs, prompt (first 50 chars): {prompt[:50]}..."
+        )
+
+        if not input_image_paths:
+            logger.error("Edit operation requires at least one input image path.")
+            return None
+
+        opened_images = []
+        opened_mask = None
+        try:
+            # Open input images in binary read mode
+            for img_path in input_image_paths:
+                if not img_path.is_file():
+                    logger.error(f"Input image file not found: {img_path}")
+                    # Clean up already opened files
+                    for f in opened_images:
+                        f.close()
+                    return None
+                opened_images.append(open(img_path, "rb"))
+
+            # Open mask if provided
+            if mask_path:
+                if not mask_path.is_file():
+                    logger.error(f"Mask file not found: {mask_path}")
+                    for f in opened_images:
+                        f.close()
+                    return None
+                opened_mask = open(mask_path, "rb")
+
+            payload: Dict[str, Any] = {
+                "model": self.model,
+                "image": opened_images[0]
+                if len(opened_images) == 1
+                else opened_images,  # API takes single file or list
+                "prompt": prompt,
+                "size": size,
+            }
+            if opened_mask:
+                payload["mask"] = opened_mask
+
+            logger.debug(
+                "Edit Payload: {k: v for k, v in payload.items() if k != 'image' and k != 'mask'}"
+            )  # Avoid logging file objects
+            response = await self.client.images.edit(**payload)
+
+            b64_data = response.data[0].b64_json
+            if not b64_data:
+                logger.error("GPT Image editing failed: No image data in response.")
+                return None
+
+            image_data = base64.b64decode(b64_data)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "wb") as f:
+                f.write(image_data)
+            logger.info(f"Edited image saved successfully to {output_path}")
+            return output_path
+
+        except Exception as e:
+            logger.exception(f"GPT Image editing failed: {e}")  # Log full traceback
+            return None
+        finally:
+            # Ensure all opened files are closed
+            for f in opened_images:
+                if not f.closed:
+                    f.close()
+            if opened_mask and not opened_mask.closed:
+                opened_mask.close()
 
 
 class ImageGeneratorFactory:
