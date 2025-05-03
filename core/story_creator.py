@@ -205,16 +205,22 @@ class StoryCreator:
             # Still return Page object without image info
             return Page(page_number=page_number, text=page_text)
 
-        character_names = [c.name for c in self.config.characters]
-        # Find characters mentioned in the current page text
+        # Find characters mentioned in the current page text and get their descriptions
         mentioned_chars = [
             c for c in self.config.characters if c.name.lower() in page_text.lower()
         ]
+        character_details_str = (
+            ", ".join([f"{c.name} ({c.description})" for c in mentioned_chars])
+            if mentioned_chars
+            else "None mentioned on this page."
+        )
+        logger.info(
+            f"Page {page_number}: Characters mentioned: {character_details_str}"
+        )
+
         character_image_paths = []
         if mentioned_chars:
-            logger.info(
-                f"Page {page_number}: Characters mentioned: {[c.name for c in mentioned_chars]}"
-            )
+            # logger.info(f"Page {page_number}: Characters mentioned: {[c.name for c in mentioned_chars]}") # Replaced by above log
             for char in mentioned_chars:
                 if char.image_path:
                     img_path = Path(
@@ -228,14 +234,15 @@ class StoryCreator:
                             f"Character image file not found for {char.name} at {img_path}, will generate without it."
                         )
 
-        # Base prompt components
+        # Base prompt components - Enhanced with character descriptions
         base_prompt = (
             "You will generate a page for a children's book. I'll give you some metadata, the full text of the book, and the text for this specific page. \n"
             f"Style: {self.config.image_style}. \n    "
             f"Setting: {self.config.location.setting}. Theme: {self.config.theme}. \n"
             f"Age: {self.config.age_range}. Story context: {' '.join(page_texts)}. \n"  # Provide full story context
             f"This specific page shows: {page_text}. \n"
-            f"Characters present or interacting if mentioned: {', '.join(character_names)}. \n"  # List all possible characters
+            # f"Characters present or interacting if mentioned: {', '.join(character_names)}. \n" # Use detailed info below
+            f"Characters mentioned on this page (use descriptions): {character_details_str}. \n"
             f"Incorporate the page text '{page_text}' visually into the image using the Andika font from Google Fonts, perhaps on a sign, scroll, or subtly in the background."
             # Consider adding negative prompts if needed
         )
@@ -251,9 +258,11 @@ class StoryCreator:
             self.image_generator, GPTImageGenerator
         ):
             # We have character images and a compatible generator for editing
+            # Enhance edit prompt with character descriptions
             edit_prompt = (
-                f"{base_prompt}"
-                f"Combine the character(s) from the input image(s) into the description above, maintaining the overall style. Preserve the key characteristics of the characters, but make them look like they are in the scene. "
+                f"{base_prompt} "
+                f"Combine the character(s) from the input image(s) into the scene described above, maintaining the overall style. "
+                f"Preserve the key characteristics of the characters (as described: {character_details_str}), but make them look like they are naturally part of the scene depicted in the page text."
             )
             final_image_prompt = edit_prompt  # Store the prompt used
             logger.info(
@@ -266,13 +275,14 @@ class StoryCreator:
             )
         else:
             # Generate from scratch (no char images, or generator doesn't support edit)
+            # Use the base_prompt which already includes character descriptions
             if character_image_paths:
                 logger.warning(
-                    f"Character images found for page {page_number}, but image generator type does not support editing. Generating from scratch."
+                    f"Character images found for page {page_number}, but image generator type does not support editing. Generating from scratch using descriptions."
                 )
             else:
                 logger.info(
-                    f"Generating new image for page {page_number} from scratch..."
+                    f"Generating new image for page {page_number} from scratch using descriptions..."
                 )
 
             generated_path = await self.image_generator.generate(
