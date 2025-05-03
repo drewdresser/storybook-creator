@@ -230,13 +230,12 @@ class StoryCreator:
 
         # Base prompt components
         base_prompt = (
-            "You will generate a page for a children's book. I'll give you some metadata, the full text of the book, and the text for this specific page."
-            f"Children's book illustration. Style: {self.config.image_style}. "
-            f"Setting: {self.config.location.setting}. Theme: {self.config.theme}. "
-            f"Age: {self.config.age_range}. Story context: {' '.join(page_texts)}. "  # Provide full story context
-            f"This specific page shows: {page_text}. "
-            f"Characters present or interacting if mentioned: {', '.join(character_names)}. "  # List all possible characters
-            f"Ensure vibrant colors, clear depiction, and a friendly atmosphere."
+            "You will generate a page for a children's book. I'll give you some metadata, the full text of the book, and the text for this specific page. \n"
+            f"Style: {self.config.image_style}. \n    "
+            f"Setting: {self.config.location.setting}. Theme: {self.config.theme}. \n"
+            f"Age: {self.config.age_range}. Story context: {' '.join(page_texts)}. \n"  # Provide full story context
+            f"This specific page shows: {page_text}. \n"
+            f"Characters present or interacting if mentioned: {', '.join(character_names)}. \n"  # List all possible characters
             f"Incorporate the page text '{page_text}' visually into the image using the Andika font from Google Fonts, perhaps on a sign, scroll, or subtly in the background."
             # Consider adding negative prompts if needed
         )

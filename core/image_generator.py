@@ -213,7 +213,8 @@ class GPTImageGenerator(ImageGenerator):
             }
             if opened_mask:
                 payload["mask"] = opened_mask
-
+            if "quality" in self.config:
+                payload["quality"] = self.config["quality"]
             logger.debug(
                 "Edit Payload: {k: v for k, v in payload.items() if k != 'image' and k != 'mask'}"
             )  # Avoid logging file objects
