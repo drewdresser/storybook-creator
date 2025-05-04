@@ -1,0 +1,21 @@
+{
+    "characters": [
+      {
+        "name": "Sam",
+        "description": "A curious 7-year-old boy who is black with a green baseball hat",
+      },
+      {
+        "name": "Tika",
+        "description": "A wise sea turtle wearing tiny goggles"
+      }
+    ],
+    "theme": "Teamwork and protecting the environment",
+    "age_range": "6-8 years",
+    "location": {
+      "setting": "A colorful coral reef beneath Sparkle Bay",
+      "details": ["Schools of neon fish", "Hidden treasure chests", "Playful dolphins"]
+    },
+    "story_length_pages": 10,
+    "image_style": "Vibrant digital-painting style with watercolor textures and rich ocean hues"
+  }
+  

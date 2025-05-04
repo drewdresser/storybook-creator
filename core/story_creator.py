@@ -15,6 +15,7 @@ from .image_generator import ImageGeneratorFactory, ImageGenerator, GPTImageGene
 from .utils import sanitize_filename, ensure_dir_exists
 
 logger = logging.getLogger(__name__)
+logging.getLogger("grpc").setLevel(logging.WARNING)
 
 
 # --- Pydantic Models for Configuration ---
@@ -72,6 +73,7 @@ class StoryCreator:
         self.gemini_model = None
         self.image_generator: Optional[ImageGenerator] = None
         self._setup_clients()
+        logger.info(f"StoryCreator initialized with config: {self.config}")
 
     def _setup_clients(self):
         """Initialize Gemini and Image Generator clients."""
@@ -88,12 +90,9 @@ class StoryCreator:
                 raise ValueError("Missing GEMINI_API_KEY")
 
             # Setup Image Generator (defaulting to OpenAI for this project)
-            # Allow specifying provider via config in future if needed
             img_gen_config = {
                 "default_provider": "openai",
-                "providers": {
-                    "openai": {"model": "gpt-image-1"}  # Example, could be configurable
-                },
+                "providers": {"openai": {"model": "gpt-image-1"}},
             }
             self.image_generator = ImageGeneratorFactory.create(
                 provider=img_gen_config["default_provider"],

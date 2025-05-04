@@ -34,10 +34,13 @@ Features:
    ```
 
 3. Create a `.env` file in the project root with your API keys:
-   ```
-   OPENAI_API_KEY=your_openai_key_here
-   GEMINI_API_KEY=your_gemini_key_here
-   ```
+    ```bash
+    cp .env.example .env
+    ```
+    ```bash
+    OPENAI_API_KEY=your_openai_key_here
+    GEMINI_API_KEY=your_gemini_key_here
+    ```
 
 ## Usage
 

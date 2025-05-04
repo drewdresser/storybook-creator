@@ -1,0 +1,24 @@
+{
+  "characters": [
+    {
+      "name": "Ella",
+      "description": "A giggly 2-year-old with a polka-dot sun hat"
+    },
+    {
+      "name": "Rory",
+      "description": "A black-and-white Tibetan terrier puppy"
+    },
+    {
+      "name": "Bitsy",
+      "description": "A friendly bumblebee who loves science experiments"
+    }
+  ],
+  "theme": "Discovery and gentle introduction to STEM",
+  "age_range": "1-3 years",
+  "location": {
+    "setting": "A blooming backyard garden",
+    "details": ["Mini cardboard rocket ship", "Colorful pinwheels", "Tiny ladybug laboratory"]
+  },
+  "story_length_pages": 6,
+  "image_style": "Bold crayon-art look with thick outlines, high contrast, toddler-friendly"
+}

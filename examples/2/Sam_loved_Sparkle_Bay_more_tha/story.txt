@@ -1,0 +1,52 @@
+Title: Sam_loved_Sparkle_Bay_more_tha
+
+--- Story Config ---
+{
+  "characters": [
+    {
+      "name": "Sam",
+      "description": "A curious 7-year-old boy who is black with a green baseball hat",
+      "image_path": null
+    },
+    {
+      "name": "Tika",
+      "description": "A wise sea turtle wearing tiny goggles",
+      "image_path": null
+    }
+  ],
+  "theme": "Teamwork and protecting the environment",
+  "age_range": "6-8 years",
+  "location": {
+    "setting": "A colorful coral reef beneath Sparkle Bay",
+    "details": [
+      "Schools of neon fish",
+      "Hidden treasure chests",
+      "Playful dolphins"
+    ]
+  },
+  "story_length_pages": 10,
+  "image_style": "Vibrant digital-painting style with watercolor textures and rich ocean hues"
+}
+
+--- Full Story Text ---
+Sam loved Sparkle Bay more than anywhere! Wearing his favorite green baseball hat, which somehow always stayed perfectly on his head even underwater, he'd dive beneath the shimmering waves. Sam was a curious boy, always eager to explore the magical world hidden beneath the sea.
+
+Wow! The coral reef below Sparkle Bay was like a rainbow city bursting with life. Bright pink and sunny orange corals twisted towards the surface like funny sculptures. Schools of tiny neon fish zipped this way and that, flashing like underwater fireworks. In the distance, Sam could see playful dolphins leaping and hear their happy clicks echoing through the water.
+
+While exploring near a giant, purple fan coral that waved gently in the current, Sam spotted someone new. It was a large, gentle sea turtle swimming with slow, graceful flaps of her flippers. And perched on her nose, she wore a pair of tiny, shiny goggles! "Hello," Sam bubbled out, waving underwater.
+
+The turtle turned her head, her eyes looking kind and wise behind the little goggles. "Well, hello there, young explorer!" she replied, her voice calm and friendly. "My name is Tika, and this beautiful reef is my home." Sam grinned widely. "I'm Sam! Your home is the most amazing place I've ever seen, Tika!"
+
+Together, Sam and Tika swam deeper, gliding past swaying sea grass and glimpsing a half-buried treasure chest that winked with golden sparkles. Suddenly, Sam pointed towards a large, bumpy piece of brain coral. "What's that, Tika?" Something pale and flimsy was tangled badly around it, looking like a sad, droopy ghost in the water.
+
+Tika swam closer, and her wise face grew serious. "Oh dear," she murmured, her voice filled with concern. "That is not a sea ghost, Sam. It's a plastic bag. Trash from the land sometimes finds its way here, and it doesn't belong. It can trap small creatures and harm our beautiful coral home." Nearby, some little yellow fish darted away, looking frightened.
+
+Sam looked at the beautiful coral being smothered and the scared little fish hiding. His chest felt tight and sad. "That's not right!" he declared bravely. "The reef needs our help, Tika! Can we get the bag off?"
+
+"I think we can, if we work together," Tika nodded encouragingly. "Teamwork can make even difficult jobs possible." Tika used her strong, flat flipper to gently nudge the plastic bag, trying to loosen its grip without breaking the delicate coral underneath.
+
+Sam, being smaller and quicker, carefully used his fingers to peel the thin plastic away from the coral's tiny bumps and ridges. It was stuck fast in one spot, but just then, a friendly dolphin swam by, gave a curious squeak, and nudged the bag gently with its nose, helping it come free!
+
+Success! The plastic bag floated away from the coral. Sam quickly grabbed it, folding it into a small bundle. He knew he needed to take it out of the ocean and put it safely in a trash bin on land. The brain coral looked bright and healthy again, free from the tangly mess.
+
+Instantly, the little yellow fish and their neon friends swarmed back, darting happily around the clean coral! "We did it, Tika! We saved the coral!" Sam cheered through his bubbles. Tika smiled, her eyes twinkling behind her goggles. "Yes, Sam. By working as a team, we protected this special place. Always remember how important it is to keep our ocean clean and safe." Sam promised he always would, excited to continue exploring the sparkling, happy reef with his wonderful new friend.
