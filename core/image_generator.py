@@ -115,9 +115,6 @@ class DallEImageGenerator(ImageGenerator):
         logger.warning(
             "DALL-E image generator does not support the 'edit' method with multiple input images."
         )
-        # Depending on the exact DALL-E version/API, a simple edit might be possible
-        # with a single input image and mask, but not the combined character scenario.
-        # Returning None or raising NotImplementedError are options.
         # For now, just log and return None.
         return None
 
@@ -164,14 +161,6 @@ class GPTImageGenerator(ImageGenerator):
         }
         if "quality" in self.config:
             payload["quality"] = self.config["quality"]
-        # Output format is determined by file saving, not direct API param for generate b64
-        # if "output_format" in self.config:
-        # Ensure output_path suffix matches format if specified
-        # output_format = self.config["output_format"].lower()
-        # payload["output_format"] = output_format # Not for b64_json response
-        # if output_path.suffix.lower() != f".{output_format}":
-        # output_path = output_path.with_suffix(f".{output_format}")
-        # logger.info(f"Adjusted output path to match format: {output_path}")
         if "output_compression" in self.config:
             # API expects 0-100, useful for jpeg/webp
             payload["output_compression"] = self.config["output_compression"]
