@@ -112,6 +112,73 @@ Each generated story includes:
 - A JSON manifest with page details
 - The original configuration used to generate the story
 
+## Examples
+
+The repository includes several pre-generated examples to help you understand what Story Book Creator can produce:
+
+- **Example 1**: A story about Maya and Nimbus in the Sky-High Cloud Kingdom
+- **Example 2**: An adventure in Sparkle Bay
+- **Example 3**: Ella's adventure in a sunny garden
+
+<details>
+<summary>📖 View Example 1: Maya's Adventure</summary>
+
+### Story Configuration
+
+```json
+{
+    "characters": [
+      {
+        "name": "Maya",
+        "description": "An adventurous 5-year-old girl with curly hair and bright green rain boots"
+      },
+      {
+        "name": "Nimbus",
+        "description": "A fluffy white cloud-puppy that can shape-shift into funny objects"
+      }
+    ],
+    "theme": "Courage and creative problem-solving",
+    "age_range": "4-6 years",
+    "location": {
+      "setting": "The Sky-High Cloud Kingdom",
+      "details": ["Cotton-candy clouds", "Rainbow slides", "Friendly sunbeam bridges"]
+    },
+    "story_length_pages": 8,
+    "image_style": "Soft pastel cartoon, gentle gradients, dreamy story-book feel"
+}
+```
+
+### Generated Story
+
+> Maya, with her bouncy curly hair, loved visiting the Sky-High Cloud Kingdom. Today, she wore her favorite bright green rain boots, perfect for stomping on fluffy clouds! Her best friend, Nimbus, a little cloud-puppy, barked happily, wagging his misty tail. They bounced together on clouds that felt like soft cotton candy.
+>
+> Friendly sunbeams made warm bridges between the clouds, and shiny Rainbow Slides swooshed down to sugary-pink cloud puffs. "Let's go on the biggest slide, Nimbus!" Maya giggled, running towards it. Nimbus scampered beside her, changing shape into a bouncy ball for fun.
+>
+> As Maya skipped near the slide, WHOOSH! A playful little wind puff tickled past. It blew the sparkly star sticker right off her green rain boot! The sticker tumbled through the air and landed far away, on a small, quivery cloud that jiggled like jelly. "Oh no!" cried Maya. "My special sticker!"
+>
+> Maya looked across the big empty space to the jiggly cloud. It seemed so far, and the cloud looked wobbly. Her tummy felt a little fluttery, like tiny butterflies were inside. "It's too far," she whispered, feeling a bit sad and scared. Nimbus nudged her hand gently with his soft, cloudy nose.
+>
+> Nimbus whined softly, then did a little flip, turning into a funny teapot shape before becoming a cloud-puppy again. Maya watched him. "Wait!" she said, her eyes lighting up. "Nimbus, you can change shape! Maybe... maybe you can help us reach the sticker?"
+>
+> Nimbus wagged his tail hard, understanding. Maya pointed. "Can you stretch, really long and strong, like a bridge?" Nimbus puffed himself up, took a deep breath of sky-air, and stretched… and stretched… and stretched! He became a sturdy, fluffy white bridge reaching all the way to the wobbly cloud.
+>
+> Maya took a deep breath too, just like Nimbus. "Okay, I can do this," she whispered. She felt brave now. Holding onto Nimbus's soft cloud-bridge sides, she carefully put one green boot, then the other, step by step, across the sky. She reached the jiggly cloud and quickly picked up her shiny star sticker!
+>
+> Maya hurried back across the Nimbus-bridge, giggling with relief. "You did it, Nimbus! We did it!" She carefully stuck the sparkly star back onto her boot. Nimbus changed back into a happy cloud-puppy, bouncing around her feet. Feeling proud and happy, they raced together to the top of the Rainbow Slide and zoomed down with happy shouts.
+
+### Pictures
+![Page 1](examples/1/Maya_with_her_bouncy_curly_hai/page_01.png)
+![Page 2](examples/1/Maya_with_her_bouncy_curly_hai/page_02.png)
+![Page 3](examples/1/Maya_with_her_bouncy_curly_hai/page_03.png)
+![Page 4](examples/1/Maya_with_her_bouncy_curly_hai/page_04.png)
+![Page 5](examples/1/Maya_with_her_bouncy_curly_hai/page_05.png)
+![Page 6](examples/1/Maya_with_her_bouncy_curly_hai/page_06.png)
+![Page 7](examples/1/Maya_with_her_bouncy_curly_hai/page_07.png)
+![Page 8](examples/1/Maya_with_her_bouncy_curly_hai/page_08.png)
+
+
+</details>
+
 ## Notes
 
 - Story generation can take several minutes depending on length
