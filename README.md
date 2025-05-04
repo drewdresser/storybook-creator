@@ -185,10 +185,6 @@ The repository includes several pre-generated examples to help you understand wh
 - Higher quality illustrations require more processing time
 - Both API keys must be valid for the system to work
 
-## License
-
-[MIT License](LICENSE)
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

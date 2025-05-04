@@ -118,13 +118,14 @@ class StoryCreator:
         loc_desc = f"{self.config.location.setting}, featuring {', '.join(self.config.location.details)}."
 
         prompt = (
-            f"Write a children's story suitable for the age range {self.config.age_range}.\n"
+            f"Create a children's story suitable for the age range {self.config.age_range}.\n"
+            f"It must make the most sense possible and every single element must be used. Make sure to write the best story possible.."
             f"Theme: {self.config.theme}\n"
             f"Characters:\n{char_desc}\n"
             f"Location: {loc_desc}\n"
             f"The story should be engaging, positive, and approximately {self.config.story_length_pages} short paragraphs long (each paragraph will be a page).\n"
-            f"Ensure the story has a clear beginning, middle, and a gentle resolution or end.\n"
-            f"Use simple language appropriate for the age group.\n"
+            f"Ensure the story has a clear beginning, middle, and a resolution or end.\n"
+            f"Use language appropriate for the age group.\n"
             f"Focus on the interactions between the characters and their environment."
             f"Do NOT include page numbers or explicit page breaks like '[Page X]' in the output. Just write the story text continuously."
         )
