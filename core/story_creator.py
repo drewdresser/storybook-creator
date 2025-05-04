@@ -78,8 +78,10 @@ class StoryCreator:
         try:
             if self.credentials.get("GEMINI_API_KEY"):
                 genai.configure(api_key=self.credentials["GEMINI_API_KEY"])
-                # Use a model suitable for creative writing, like gemini-1.5-flash or pro
-                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                # Use a model suitable for creative writing, like gemini-2.5-pro-preview-03-25
+                self.gemini_model = genai.GenerativeModel(
+                    "gemini-2.5-pro-preview-03-25"
+                )
                 logger.info("Gemini client configured.")
             else:
                 logger.error("GEMINI_API_KEY not found in credentials.")

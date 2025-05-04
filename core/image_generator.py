@@ -70,7 +70,6 @@ class DallEImageGenerator(ImageGenerator):
             "prompt": prompt,
             "n": 1,
             "size": size,
-            "response_format": "b64_json",  # Request base64 encoded image
         }
         if "quality" in self.config:
             payload["quality"] = self.config["quality"]
@@ -162,7 +161,6 @@ class GPTImageGenerator(ImageGenerator):
             "model": self.model,
             "prompt": prompt,
             "size": size,
-            "response_format": "b64_json",  # Need b64 for saving
         }
         if "quality" in self.config:
             payload["quality"] = self.config["quality"]
